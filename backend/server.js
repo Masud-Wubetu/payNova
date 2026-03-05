@@ -16,11 +16,9 @@ dotenv.config();
 //routes
 
 //View engine setup
-//app.use(expressLayouts);
-app.engine("html", ejs.renderFile);
-app.set("view engine", "html");
-app.set("views", path.join(__dirname, "../views"));
-//app.set('layout', 'layouts/main');
+app.use(expressLayouts);
+app.set("view engine", "ejs");
+app.set('layout', 'layouts/main');
 
 //Static files
  
@@ -34,7 +32,7 @@ app.set("views", path.join(__dirname, "../views"));
 
 //Home route
 app.get('/', (req, res) => {
-    res.render('index.html');
+    res.render('index.ejs');
 });
 
 //Handle 404
