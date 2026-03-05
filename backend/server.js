@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const ejs = require('ejs')
 const methosOverride = require('method-override');
 const expressLayouts = require('express-ejs-layouts');
 
@@ -15,6 +16,11 @@ dotenv.config();
 //routes
 
 //View engine setup
+//app.use(expressLayouts);
+app.engine("html", ejs.renderFile);
+app.set("view engine", "html");
+app.set("views", path.join(__dirname, "../views"));
+//app.set('layout', 'layouts/main');
 
 //Static files
  
@@ -27,6 +33,9 @@ dotenv.config();
 //amount api routes
 
 //Home route
+app.get('/', (req, res) => {
+    res.render('index.html');
+});
 
 //Handle 404
 
