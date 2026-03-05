@@ -5,6 +5,7 @@ const path = require('path');
 const ejs = require('ejs')
 const methosOverride = require('method-override');
 const expressLayouts = require('express-ejs-layouts');
+const { productRouter } = require('./routes/productRoutes')
 
 const app = express(); 
 
@@ -28,7 +29,11 @@ app.set('layout', 'layouts/main');
 
 //Body parser
 
-//amount api routes
+//Mount api routes
+
+//Mount web frontend routes
+app.use('/products', productRouter)
+
 
 //Home route
 app.get('/', (req, res) => {
