@@ -1,43 +1,47 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const cors = require('cors');
 const path = require('path');
-const ejs = require('ejs')
-const methosOverride = require('method-override');
-const expressLayouts = require('express-ejs-layouts');
-const { productRouter } = require('./routes/productRoutes')
-
-const app = express(); 
 
 //Load env variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const cors = require('cors');
+const ejs = require('ejs')
+const methodOverride = require('method-override');
+const expressLayouts = require('express-ejs-layouts');
+const connectDB = require('./config/db');
+const { productRouter } = require('./routes/productRoutes')
 
 //Connect to database
+connectDB();
 
-//routes
+const app = express();
 
 //View engine setup
 app.use(expressLayouts);
 app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "../views"));
 app.set('layout', 'layouts/main');
 
 //Static files
- 
+app.use(express.static(path.join(__dirname, 'public')));
+
 //Method override for PUT/DELETE in forms
+app.use(methodOverride('_method'));
 
 //Enable cors
+app.use(cors());
 
 //Body parser
-
-//Mount api routes
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 //Mount web frontend routes
 app.use('/products', productRouter)
 
-
 //Home route
 app.get('/', (req, res) => {
-    res.render('index.ejs');
+    res.render('index');
 });
 
 //Handle 404

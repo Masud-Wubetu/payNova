@@ -1,5 +1,3 @@
-const dotenv = require("dotenv");
-dotenv.config();
 const Product = require("../models/Product");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -16,7 +14,13 @@ exports.showCreateForm = (req, res) => {
 // @access  Public
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, description, imageUrl } = req.body;
+    let { name, price, description, imageUrl } = req.body;
+
+    // Handle empty image URL to trigger Mongoose default
+    if (!imageUrl || imageUrl.trim() === "") {
+      imageUrl = undefined;
+    }
+
     //Create product in stripe
     const stripeProduct = await stripe.products.create({
       name,
@@ -41,10 +45,11 @@ exports.createProduct = async (req, res) => {
     console.log(product);
 
     //Redirect  for frontend
-    res.render("products/index");
+    res.redirect("/products");
   } catch (error) {
+    console.error("Error creating product:", error);
     res.status(500).render("error", {
-      message: "Error creating product",
+      message: error.message || "Error creating product",
     });
   }
 };
@@ -53,32 +58,32 @@ exports.createProduct = async (req, res) => {
 //  @route   GET/products (frontend only)
 //  @access  Public
 
-// exports.getProducts = async (req, res) => {
-//   try {
-//     const products = await Product.find().sort("-createdAt");
-     //Render for frontend
-//     res.render("products/index", {
-//       products,
-//     });
-//   } catch (error) {
-//     res.status(500).render("error", {
-//       message: "Error Loading products",
-//     });
-//   }
-// };
+exports.getProducts = async (req, res) => {
+  try {
+    const products = await Product.find().sort("-createdAt");
+    //Render for frontend
+    res.render("products/index", {
+      products,
+    });
+  } catch (error) {
+    res.status(500).render("error", {
+      message: "Error Loading products",
+    });
+  }
+};
 
 //  @desc    Get a Product
 // @route   GET/products/:id (frontend only)
 //  @access  Public
-// exports.getProduct = async (req, res) => {
-//   try {
-//     const product = await Product.findById(req.params.id);
-//     res.render("products/show", {
-//       product,
-//     });
-//   } catch (error) {
-//     res.status(500).render("error", {
-//       message: "Error Loading products",
-//     });
-//   }
-// };
+exports.getProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    res.render("products/show", {
+      product,
+    });
+  } catch (error) {
+    res.status(500).render("error", {
+      message: "Error Loading products",
+    });
+  }
+};

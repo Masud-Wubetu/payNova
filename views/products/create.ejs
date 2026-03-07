@@ -197,7 +197,11 @@
           </p>
         </div>
 
-        <form action="/products" method="POST">
+        <form
+          action="/products"
+          method="POST"
+          onsubmit="this.querySelector('button[type=submit]').disabled = true; return true;"
+        >
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">

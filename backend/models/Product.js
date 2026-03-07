@@ -19,7 +19,7 @@ const productSchema = new mongoose.Schema(
     imageUrl: {
       type: String,
       default:
-        "https://cdn.pixabay.com/photo/2016/06/14/04/51/bag-1455765_1280.jpg",
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
     },
     stripeProductId: {
       type: String,

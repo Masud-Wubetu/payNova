@@ -2,15 +2,11 @@
   <div class="row">
     <div class="col-lg-6 mb-5 mb-lg-0">
       <div class="product-image-container rounded-4 overflow-hidden shadow-lg">
-        <img
-          src="<%= product.imageUrl %>"
-          class="img-fluid w-100 product-image"
-          alt="<%= product.name %>"
-        />
+        <img src="<%= product.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1000' %>"
+          class="img-fluid w-100 product-image" alt="<%= product.name %>"
+          onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1000'" />
         <div class="product-price-overlay">
-          <span class="badge rounded-pill"
-            >$<%= product.price.toFixed(2) %></span
-          >
+          <span class="badge rounded-pill">$<%= product.price.toFixed(2) %></span>
         </div>
       </div>
     </div>
@@ -21,20 +17,16 @@
         </h1>
 
         <div class="product-description mb-5">
-          <p class="lead text-muted mb-4"><%= product.description %></p>
+          <p class="lead text-muted mb-4">
+            <%= product.description %>
+          </p>
         </div>
 
         <div class="d-flex flex-column flex-md-row gap-3 mb-5">
-          <a
-            href="/checkout/<%= product._id %>"
-            class="btn btn-success btn-lg px-5 py-3 rounded-pill"
-          >
+          <a href="/checkout/<%= product._id %>" class="btn btn-success btn-lg px-5 py-3 rounded-pill">
             <i class="bi bi-cart-plus me-2"></i> Buy Now
           </a>
-          <a
-            href="/products"
-            class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill"
-          >
+          <a href="/products" class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill">
             <i class="bi bi-arrow-left me-2"></i> Back to Products
           </a>
         </div>
@@ -45,19 +37,18 @@
               <i class="bi bi-upc me-3" style="color: var(--primary-color)"></i>
               <div>
                 <small class="text-muted d-block">Product ID</small>
-                <span class="fw-medium"><%= product._id %></span>
+                <span class="fw-medium">
+                  <%= product._id %>
+                </span>
               </div>
             </div>
             <div class="d-flex align-items-center">
-              <i
-                class="bi bi-calendar me-3"
-                style="color: var(--primary-color)"
-              ></i>
+              <i class="bi bi-calendar me-3" style="color: var(--primary-color)"></i>
               <div>
                 <small class="text-muted d-block">Created</small>
-                <span class="fw-medium"
-                  ><%= new Date(product.createdAt).toLocaleString() %></span
-                >
+                <span class="fw-medium">
+                  <%= new Date(product.createdAt).toLocaleString() %>
+                </span>
               </div>
             </div>
           </div>
