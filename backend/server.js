@@ -10,7 +10,8 @@ const ejs = require('ejs')
 const methodOverride = require('method-override');
 const expressLayouts = require('express-ejs-layouts');
 const connectDB = require('./config/db');
-const { productRouter } = require('./routes/productRoutes')
+const { productRouter } = require('./routes/productRoutes');
+const { paymentRouter } = require('./routes/paymentRoutes');
 
 //Connect to database
 connectDB();
@@ -37,7 +38,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 //Mount web frontend routes
-app.use('/products', productRouter)
+app.use('/products', productRouter);
+app.use('/', paymentRouter);
 
 //Home route
 app.get('/', (req, res) => {
