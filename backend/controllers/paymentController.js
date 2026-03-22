@@ -9,13 +9,17 @@ const Product = require("../models/Product");
 exports.showCheckout = async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId);
-    res.render("checkout", {
-      product,
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+    res.status(200).json({
+      success: true,
+      data: {
+        product,
+        stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      },
     });
   } catch (error) {
-    res.status(500).render("error", {
-      message: "Error Loading Checkout",
+    res.status(500).json({
+      success: false,
+      error: "Error Loading Checkout",
     });
   }
 };
@@ -27,6 +31,7 @@ exports.processCheckout = async (req, res) => {
   try {
     const { name, email } = req.body;
     const productId = req.params.productId;
+
     //Find or create customer
     let customer = await Customer.findOne({ email });
     if (!customer) {
@@ -42,44 +47,48 @@ exports.processCheckout = async (req, res) => {
         stripeCustomerId: stripeCustomer.id,
       });
     }
+
     //Find product
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).render("error", {
-        message: "Product Not Found",
-      });
+      return res.status(404).json({ success: false, error: "Product not found" });
     }
-    //Create payment intent
+
+    //Create a PaymentIntent in Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(product.price * 100), //Stripe expects amount in cents
+      amount: Math.round(product.price * 100),
       currency: "usd",
       customer: customer.stripeCustomerId,
-      description: `Payment for ${product.name}`,
-      metadata: {
-        customerId: customer._id.toString(),
-        productId: product._id.toString(),
-      },
+      description: product.name,
+      metadata: { productId: product._id.toString() },
     });
-    //Create payment record in database
-    const payment = await Payment.create({
+
+    //Save a pending Payment record in DB
+    await Payment.create({
       customer: customer._id,
       stripePaymentIntentId: paymentIntent.id,
       amount: product.price,
       currency: "usd",
-      description: `Payment for  ${product.name}`,
-      status: "succeeded",
+      status: "pending",
+      description: product.name,
     });
-    //Render the payment page
-    res.render("payment", {
-      title: "Complete Payment",
-      product,
-      clientSecret: paymentIntent.client_secret,
-      customer,
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+
+    //Return JSON for frontend
+    res.status(200).json({
+      success: true,
+      data: {
+        title: "Complete Payment",
+        product,
+        clientSecret: paymentIntent.client_secret,
+        customer,
+        stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      }
     });
   } catch (error) {
-    res.status(500).render("error", {
-      message: "Error Processing Checkout",
+    console.error("Error Processing Checkout:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error Processing Checkout",
     });
   }
 };
@@ -88,7 +97,10 @@ exports.processCheckout = async (req, res) => {
 // @route   GET /payment/success (frontend only)
 // @access  Public
 exports.paymentSuccess = (req, res) => {
-  res.render("success");
+  res.status(200).json({
+    success: true,
+    message: "Payment Successful",
+  });
 };
 
 // @desc     Show all payments page
@@ -99,16 +111,40 @@ exports.showAllPayments = async (req, res) => {
     const payments = await Payment.find()
       .populate("customer", "name email")
       .sort("-createdAt");
-    res.render("payments/index", {
-      payments,
+    res.status(200).json({
+      success: true,
+      count: payments.length,
+      data: payments,
     });
   } catch (error) {
-    res.status(500).render("error", {
-      message: "Error Processing Checkout",
+    res.status(500).json({
+      success: false,
+      error: "Error Loading Payments",
     });
   }
 };
 
-// @desc    Manual payment status update (to replace webhook)
-// @route   POST /payments/update/:paymentIntent (frontend only)
+// @desc    Manual payment status update
+// @route   POST /api/payments/update/:paymentIntentId
 // @access  Public
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { paymentIntentId } = req.params;
+    const { status } = req.body;
+
+    const payment = await Payment.findOneAndUpdate(
+      { stripePaymentIntentId: paymentIntentId },
+      { status },
+      { new: true }
+    );
+
+    if (!payment) {
+      return res.status(404).json({ success: false, error: "Payment not found" });
+    }
+
+    res.status(200).json({ success: true, data: payment });
+  } catch (error) {
+    console.error("Error Updating Payment Status:", error);
+    res.status(500).json({ success: false, error: "Error Updating Payment Status" });
+  }
+};

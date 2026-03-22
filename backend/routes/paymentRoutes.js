@@ -9,10 +9,10 @@ const {
 const paymentRouter = express.Router();
 
 //Web frontend routes
-
 paymentRouter.post("/checkout/:productId", processCheckout);
 paymentRouter.get("/success", paymentSuccess);
 paymentRouter.get("/payments", showAllPayments);
 paymentRouter.get("/checkout/:productId", showCheckout);
+paymentRouter.post("/payments/update/:paymentIntentId", updatePaymentStatus);
 
 module.exports = { paymentRouter };

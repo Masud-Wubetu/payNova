@@ -5,9 +5,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 // @route   GET /api/products/new (frontend only)
 // @access  Public
 
-exports.showCreateForm = (req, res) => {
-  res.render("products/create");
-};
+// showCreateForm removed (frontend concern)
 
 // @desc   Create new product
 // @route   POST /products (frontend only)
@@ -44,12 +42,16 @@ exports.createProduct = async (req, res) => {
     });
     console.log(product);
 
-    //Redirect  for frontend
-    res.redirect("/products");
+    //Return JSON for frontend
+    res.status(201).json({
+      success: true,
+      data: product
+    });
   } catch (error) {
     console.error("Error creating product:", error);
-    res.status(500).render("error", {
-      message: error.message || "Error creating product",
+    res.status(500).json({
+      success: false,
+      error: error.message || "Error creating product",
     });
   }
 };
@@ -61,13 +63,16 @@ exports.createProduct = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find().sort("-createdAt");
-    //Render for frontend
-    res.render("products/index", {
-      products,
+    //Return JSON for frontend
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      data: products,
     });
   } catch (error) {
-    res.status(500).render("error", {
-      message: "Error Loading products",
+    res.status(500).json({
+      success: false,
+      error: "Error Loading products",
     });
   }
 };
@@ -78,12 +83,94 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    res.render("products/show", {
-      product,
+    res.status(200).json({
+      success: true,
+      data: product,
     });
   } catch (error) {
-    res.status(500).render("error", {
-      message: "Error Loading products",
+    res.status(500).json({
+      success: false,
+      error: "Error Loading product",
+    });
+  }
+};
+// @desc    Update a Product
+// @route   PUT /api/products/:id
+// @access  Public
+exports.updateProduct = async (req, res) => {
+  try {
+    let { name, price, description, imageUrl } = req.body;
+
+    // Handle empty image URL
+    if (imageUrl === "") {
+      imageUrl = undefined;
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: "Product not found" });
+    }
+
+    // Update in MongoDB
+    product.name = name || product.name;
+    product.price = price || product.price;
+    product.description = description || product.description;
+    product.imageUrl = imageUrl || product.imageUrl;
+
+    await product.save();
+
+    // Optionally update Stripe product info (name/description)
+    try {
+      await stripe.products.update(product.stripeProductId, {
+        name: product.name,
+        description: product.description,
+        images: product.imageUrl ? [product.imageUrl] : undefined,
+      });
+    } catch (stripeErr) {
+      console.warn("Stripe product update failed:", stripeErr.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating product",
+    });
+  }
+};
+
+// @desc    Delete a Product
+// @route   DELETE /api/products/:id
+// @access  Public
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: "Product not found" });
+    }
+
+    // Deactivate in Stripe instead of full delete to preserve history
+    try {
+      await stripe.products.update(product.stripeProductId, { active: false });
+    } catch (stripeErr) {
+      console.warn("Stripe product deactivation failed:", stripeErr.message);
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error deleting product",
     });
   }
 };
