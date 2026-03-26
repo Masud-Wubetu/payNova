@@ -20,7 +20,7 @@ const CreateProduct = () => {
         setLoading(true);
         setStatus(null);
         try {
-            await axios.post('http://localhost:8080/api/products', {
+            await axios.post('/api/products', {
                 ...form,
                 price: parseFloat(form.price),
             });
